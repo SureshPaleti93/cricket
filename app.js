@@ -121,7 +121,8 @@ app.get("/matches/:matchId/players", async (request, response) => {
   const { matchId } = request.params;
   const getPlayersListQuery = `
     SELECT
-        *
+        player_details.player_id as playerId,
+        player_details.player_name as playerName
     FROM 
         player_match_score NATURAL JOIN player_details
     WHERE
@@ -137,12 +138,16 @@ app.get("/players/:playerId/playerScores/", async (request, response) => {
   const { playerId } = request.params;
   const getPlayerScoresQuery = `
   SELECT 
-        *
+        player_details.player_id as playerId,
+        player_details.player_name as playerName,
+        SUM(player_match_score.score) as totalScore,
+        SUM(fours) AS totalFours,
+        SUM(sixes) as totalSixes,
   FROM 
-        player_match_score INNER JOIN player_details
+        player_details INNER JOIN player_match_score
         ON player_details.player_id = player_match_score.player_id
   WHERE
-        player_id = ${playerId};`;
+        player_details.player_id = ${playerId};`;
 
   const playerScores = await db.all(getPlayerScoresQuery);
   response.send(playerScores);
