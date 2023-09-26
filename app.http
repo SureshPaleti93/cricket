@@ -10,7 +10,7 @@ PUT http://localhost:3000/players/2/
 Content-Type: application/json
 
 {
-    "playerName": "Ram"
+    "playerName": "Janu"
 }
 
 ###
@@ -22,7 +22,7 @@ GET http://localhost:3000/matches/4/
 GET http://localhost:3000/players/2/matches/
 
 ###
-GET http://localhost:3000/matches/4/players/
+GET http://localhost:3000/matches/1/players
 
 ###
 

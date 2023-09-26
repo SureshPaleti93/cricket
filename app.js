@@ -63,15 +63,16 @@ module.exports = app;
 
 // API-3 UPDATE PLAYER DETAILS BASED ON PLAYER ID
 
-app.put("/players/:playerId", async (request, response) => {
+app.put("/players/:playerId/", async (request, response) => {
   const { playerId } = request.params;
   const { playerName } = request.body;
   const updatePlayerQuery = `
     UPDATE
         player_details
     SET 
-        player_name = '${playerName}';
-    `;
+        player_name = '${playerName}'
+    WHERE 
+        player_id = ${playerId};`;
   await db.run(updatePlayerQuery);
   response.send("player Details Updated");
 });
@@ -102,12 +103,11 @@ app.get("/players/:playerId/matches", async (request, response) => {
   const { playerId } = request.params;
   const getMatchQuery = `
   SELECT
-    t.match_id as matchId,
-    t.match,
-    t.year
+    match_id as matchId,
+    match,
+    year
   FROM 
-    (player_match_score LEFT JOIN match_details
-    ON player_match_score.match_id = match_details.match_id) as t
+    player_match_score NATURAL JOIN match_details
   WHERE
     player_match_score.player_id = ${playerId};`;
   const matchIds = await db.all(getMatchQuery);
@@ -115,41 +115,35 @@ app.get("/players/:playerId/matches", async (request, response) => {
 });
 module.exports = app;
 
-//API-6 LIST OF PLAYERS BASED ON MATCH ID
+//API-6 GET LIST OF PLAYERS BY MATCH
 
 app.get("/matches/:matchId/players", async (request, response) => {
   const { matchId } = request.params;
-  const getMatchPlayersQuery = `
+  const getPlayersListQuery = `
     SELECT
-        t.player_id as playerId,
-        t.player_name as playerName
+        *
     FROM 
-        (player_match_score INNER JOIN player_details
-        ON player_match_score.player_id = player_details.player_id) as t
+        player_match_score NATURAL JOIN player_details
     WHERE
-        player_match_score.match_id = ${matchId};`;
-  const matchPlayers = await db.all(getMatchPlayersQuery);
+        match_id = ${matchId};`;
+  const matchPlayers = await db.all(getPlayersListQuery);
   response.send(matchPlayers);
 });
 module.exports = app;
 
-//API-7 GET SPECIFIC PLAYER TOTAL SCORES
+//API-7 GET PLAYER SCORES
 
-app.get("/players/:playerId/playerScores", async (request, response) => {
+app.get("/players/:playerId/playerScores/", async (request, response) => {
   const { playerId } = request.params;
   const getPlayerScoresQuery = `
-    SELECT
-        DISTINCT(player_id as playerId),
-        DISTINCT(player_name as playerName),
-        sum(score) as totalScore,
-        sum(fours) as totalFours,
-        sum(sixes) as totalSixes
-    FROM
-        player_match_score
-    GROUP BY
-        player_id
-    WHERE
+  SELECT 
+        *
+  FROM 
+        player_match_score INNER JOIN player_details
+        ON player_details.player_id = player_match_score.player_id
+  WHERE
         player_id = ${playerId};`;
+
   const playerScores = await db.all(getPlayerScoresQuery);
   response.send(playerScores);
 });
